@@ -1,5 +1,7 @@
 # noculus
-A simple application that shuts down Oculus services when Home is not in use
+A simple application that shuts down Oculus services when Home is not in use.
+
+Feel free to improve upon it. I didn't plug in a real logger, commenting is at a minimum, error handling is mostly greedy and silent, and the code structure is heavily static.
 
 ## Use
 No arguments: attempts to hook in to existing Oculus Home instance, or exits  
