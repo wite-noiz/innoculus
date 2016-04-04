@@ -1,4 +1,4 @@
-# noculus
+# innoculus
 A simple application that shuts down Oculus services when Home is not in use.  
 My suggestion is to disable the default Windows service.
 
@@ -9,6 +9,9 @@ Also, no thread-safe code.
 No arguments: attempts to hook in to existing Oculus Home instance, or starts a new one; starts the OVRServer before and stops it once Home is closed.
 
 ## Changelog
+**v1.2**
+* Renamed to "innoculus" - suggested by /u/50bmg
+
 **v1.1**  
 * Remove "/start" option - all rolled in to one
 * Will try to stop the Windows service before starting Home

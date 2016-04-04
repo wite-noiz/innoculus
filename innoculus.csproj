@@ -7,8 +7,8 @@
     <ProjectGuid>{1983886C-A784-4B3D-8927-A270BE1268AB}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Noculus</RootNamespace>
-    <AssemblyName>Noculus</AssemblyName>
+    <RootNamespace>innoculus</RootNamespace>
+    <AssemblyName>innoculus</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
