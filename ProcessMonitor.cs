@@ -34,13 +34,13 @@ namespace Noculus
         {
             if (_watchTask != null)
             {
-                _watchTask.Dispose();
+                // TODO: interrupt existing
             }
             _watchTask = Task.Run(() =>
             {
                 var procId = _process.Id;
                 _process.WaitForExit();
-                if (_process.Id == procId)
+                if (_watchTask != null && _process != null && _process.Id == procId)
                 {
                     _process = null;
                     _watchTask = null;
@@ -73,6 +73,28 @@ namespace Noculus
                     newProc.Kill();
                 }
                 catch { }
+            }
+        }
+
+        public void StopMonitor()
+        {
+            // TODO
+            _watchTask = null;
+        }
+
+        public void StopProcess(bool dontWatch = false)
+        {
+            if (dontWatch)
+            {
+                StopMonitor();
+            }
+
+            if (_process != null)
+            {
+                _process.Close();
+                _process.WaitForExit(5000);
+                _process.Kill();
+                _process = null;
             }
         }
     }

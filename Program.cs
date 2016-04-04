@@ -15,31 +15,25 @@ namespace Noculus
     /// * Look for Oculus Home
     ///     * If exists, attach and wait
     ///     * Else exit, unless /start when we should start service then Home
-    /// * If Oculus Home ends, stop services
-    /// 
-    /// Since the service runs as admin, need to start a new process with privileges for handling them.
-    /// Interestingly, Home cannot be started as admin (probably a profile thing), so Noculus cannot run as admin and then start Home.
+    /// * If Oculus Home ends, stop service
     /// </summary>
     public static class Program
     {
         private const string OCULUS_PROCESS_NAME = "OculusClient";
         private const string OCULUS_CLIENT_PATH = @"%ProgramFiles(x86)%\Oculus\Support\oculus-client\OculusClient.exe";
         private const string OCULUS_SERVICE_NAME = "Oculus VR Runtime Service";
+        private const string OCULUS_SERVER_NAME = "OVRServer_x64";
+        private const string OCULUS_SERVER_PATH = @"%ProgramFiles(x86)%\Oculus\Support\oculus-runtime\OVRServer_x64.exe";
 
         private static bool _hasAdminRights = false;
         private static ProcessMonitor _monitor = null;
 
         public static void Main(params string[] args)
         {
-            // Stop/start services - assumes has admin rights
-            if (args.Any(a => a.ToLower() == "/start_service"))
+            // Stop and disable services - assumes has admin rights
+            if (args.Any(a => a.ToLower() == "/stop_service"))
             {
-                StartServices(false);
-                return;
-            }
-            else if (args.Any(a => a.ToLower() == "/stop_service"))
-            {
-                StopServices(false);
+                DisableService(false);
                 return;
             }
 
@@ -60,10 +54,11 @@ namespace Noculus
             {
                 Console.WriteLine("Found process: " + OCULUS_PROCESS_NAME);
             }
-            else if (args.Any(a => a.ToLower() == "/start"))
+            else
             {
                 Console.WriteLine("No process. Starting: " + OCULUS_CLIENT_PATH);
-                StartServices(!_hasAdminRights);
+                DisableService(!_hasAdminRights);
+                StartServer();
                 var appPath = Environment.ExpandEnvironmentVariables(OCULUS_CLIENT_PATH);
                 _monitor.StartProcess(appPath);
             }
@@ -80,13 +75,6 @@ namespace Noculus
             }
         }
 
-        private static void Monitor_ProcessExited(object sender, EventArgs e)
-        {
-            Console.WriteLine("Process exited");
-            StopServices(!_hasAdminRights);
-            Application.Exit();
-        }
-
         [PrincipalPermission(SecurityAction.Demand, Role = @"BUILTIN\Administrators")]
         public static void CheckAdminRights()
         {
@@ -96,16 +84,14 @@ namespace Noculus
         public static void RestartWithAdmin(string args)
         {
             Console.WriteLine("Restarting process with permissions for: " + args);
-            var psi = new ProcessStartInfo
-            {
-                FileName = Application.ExecutablePath,
-                Arguments = args,
-                Verb = "runas"
-            };
-
             var process = new Process
             {
-                StartInfo = psi
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = Application.ExecutablePath,
+                    Arguments = args,
+                    Verb = "runas"
+                }
             };
             process.Start();
             System.Threading.Thread.Sleep(1000);
@@ -113,31 +99,34 @@ namespace Noculus
             Console.WriteLine("Admin process complete");
         }
 
-        private static void StartServices(bool needsAdmin)
+        private static void Monitor_ProcessExited(object sender, EventArgs e)
         {
-            Console.WriteLine("Starting service: " + OCULUS_SERVICE_NAME);
+            Console.WriteLine("Process exited");
+            StopServer();
+            Application.Exit();
+        }
+
+        private static void StartServer()
+        {
             try
             {
-                var svc = new ServiceController(OCULUS_SERVICE_NAME);
-                if (svc.Status != ServiceControllerStatus.Running)
+                var svc = Process.GetProcessesByName(OCULUS_SERVER_NAME).FirstOrDefault();
+                if (svc == null)
                 {
-                    if (needsAdmin)
+                    Console.WriteLine("Starting server: " + OCULUS_SERVER_NAME);
+                    var appPath = Environment.ExpandEnvironmentVariables(OCULUS_SERVER_PATH);
+                    var process = new Process
                     {
-                        RestartWithAdmin("/start_service");
-                    }
-                    else
-                    {
-                        svc.Start();
-                        svc.WaitForStatus(ServiceControllerStatus.Running, TimeSpan.FromSeconds(60));
-                    }
-                    if (svc.Status != ServiceControllerStatus.Running)
-                    {
-                        Console.WriteLine("Service started");
-                    }
-                    else
-                    {
-                        Console.WriteLine("Service not started");
-                    }
+                        StartInfo = new ProcessStartInfo
+                        {
+                            FileName = appPath,
+                            CreateNoWindow = true,
+                            RedirectStandardOutput = true,
+                            UseShellExecute = false
+                        }
+                    };
+                    process.Start();
+                    System.Threading.Thread.Sleep(1000);
                 }
             }
             catch (Exception ex)
@@ -146,7 +135,24 @@ namespace Noculus
             }
         }
 
-        private static void StopServices(bool needsAdmin)
+        private static void StopServer()
+        {
+            try
+            {
+                var svc = Process.GetProcessesByName(OCULUS_SERVER_NAME).FirstOrDefault();
+                if (svc != null)
+                {
+                    Console.WriteLine("Stopping server: " + OCULUS_SERVER_NAME);
+                    svc.Kill();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("[ERROR] Failed to stop server: " + ex.Message);
+            }
+        }
+
+        private static void DisableService(bool needsAdmin)
         {
             Console.WriteLine("Stopping service: " + OCULUS_SERVICE_NAME);
             try
