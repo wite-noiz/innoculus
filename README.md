@@ -1,11 +1,18 @@
 # noculus
-A simple application that shuts down Oculus services when Home is not in use.
+A simple application that shuts down Oculus services when Home is not in use.  
+My suggestion is to disable the default Windows service.
 
-Feel free to improve upon it. I didn't plug in a real logger, commenting is at a minimum, error handling is mostly greedy and silent, and the code structure is heavily static.
+Feel free to improve upon it. I didn't plug in a real logger, commenting is at a minimum, error handling is mostly greedy and silent, and the code structure is heavily static.  
+Also, no thread-safe code.
 
 ## Use
-No arguments: attempts to hook in to existing Oculus Home instance, or exits  
-With "/start": starts Oculus Home if not already running, starting service first
+No arguments: attempts to hook in to existing Oculus Home instance, or starts a new one; starts the OVRServer before and stops it once Home is closed.
+
+## Changelog
+**v1.1**  
+* Remove "/start" option - all rolled in to one
+* Will try to stop the Windows service before starting Home
+* Now handles OVRService directly; no more need for the Windows service nor escalated privileges
 
 ## Build
 Built in VS 2013 with .NET 4.5. Nothing special.
@@ -18,5 +25,6 @@ I could have had it always running and watching to manage the services, but what
 Also, I wouldn't be able to natively interrupt the start of Home in order to start the services, so there's no real gain.
 
 ## Permissions
+**v1.0 only**  
 The Oculus services must be stopped/started with Admin privileges, so you'll get a permission escalation request when it needs to do that.  
 Since Oculus Home must be run on your profile, you can't use "noculus /start" with Admin privileges to reduce the requests.
