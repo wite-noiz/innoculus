@@ -9,6 +9,9 @@ Also, no thread-safe code.
 No arguments: attempts to hook in to existing Oculus Home instance, or starts a new one; starts the OVRServer before and stops it once Home is closed.
 
 ## Changelog
+**v1.3**
+* Support any installation path
+
 **v1.2**
 * Renamed to "innoculus" - suggested by /u/50bmg
 
